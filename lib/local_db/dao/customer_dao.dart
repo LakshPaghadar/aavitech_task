@@ -1,7 +1,6 @@
-import 'package:dummy_api_call_retrofit/locator/locator.dart';
 import 'package:floor/floor.dart';
+import '../../core/locator/locator.dart';
 import '../../model/response/customer_response_model.dart';
-
 
 @dao
 abstract class CustomerDao {
@@ -19,4 +18,3 @@ abstract class CustomerDao {
 }
 
 CustomerDao customerDao = locator.get<CustomerDao>();
-

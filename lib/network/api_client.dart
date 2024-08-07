@@ -1,9 +1,7 @@
 import 'dart:async';
-
 import 'package:dio/dio.dart';
-import 'package:dummy_api_call_retrofit/locator/locator.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-
+import '../core/locator/locator.dart';
 import 'data_source/api_utils.dart';
 
 class ApiClient {
@@ -23,15 +21,15 @@ class ApiClient {
         'contentType': 'application/json',
         'responseType': 'text/plain',
       },
-      connectTimeout: Duration(seconds: 60),
-        receiveTimeout: Duration(seconds: 60),
-      sendTimeout: Duration(seconds: 60),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
+      sendTimeout: const Duration(seconds: 60),
     );
     dio.interceptors.add(PrettyDioLogger(
-      request: true,
-      requestBody: true,
-      responseBody: true,requestHeader: true
-    ));
+        request: true,
+        requestBody: true,
+        responseBody: true,
+        requestHeader: true));
 
     return dio;
   }

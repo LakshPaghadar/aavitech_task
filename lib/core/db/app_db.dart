@@ -1,5 +1,7 @@
-import 'package:dummy_api_call_retrofit/locator/locator.dart';
+
 import 'package:hive/hive.dart';
+
+import '../locator/locator.dart';
 
 class AppDB {
   static const _appDbBox = '_appDbBox';

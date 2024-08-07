@@ -1,7 +1,6 @@
-import 'package:dummy_api_call_retrofit/locator/locator.dart';
 import 'package:floor/floor.dart';
+import '../../core/locator/locator.dart';
 import '../../model/response/products_response.dart';
-
 
 @dao
 abstract class GetProductsResultDao {
@@ -18,4 +17,4 @@ abstract class GetProductsResultDao {
   Future<void> deleteProduct(GetProductsResult product);
 }
 
-GetProductsResultDao productsDao=locator.get<GetProductsResultDao>();
+GetProductsResultDao productsDao = locator.get<GetProductsResultDao>();

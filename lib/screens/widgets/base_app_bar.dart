@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import '../../generated/assets.dart';
 import '../../values/colors.dart';
 import '../../values/style.dart';
 
-//ignore: must_be_immutable
 class BaseAppBar extends StatefulWidget implements PreferredSizeWidget {
   late String? title;
   bool centerTitle = false;

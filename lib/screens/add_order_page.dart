@@ -310,6 +310,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                       FilteringTextInputFormatter.digitsOnly
                     ],
                     cursorColor: AppColor.favColor,
+                    maxLength: 4,
                     decoration: const InputDecoration(
                         contentPadding: EdgeInsets.zero,
                         focusedBorder: UnderlineInputBorder(
@@ -388,6 +389,13 @@ class _AddOrderPageState extends State<AddOrderPage> {
           ),
         );
         return false;
+      }
+      if(int.parse(qtyController.text)>=10000){
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please add items less than 10000"),
+          ),
+        );
       }
       return true;
     } else {

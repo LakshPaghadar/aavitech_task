@@ -1,24 +1,28 @@
 import 'package:dummy_api_call_retrofit/screens/add_order_page.dart';
 import 'package:dummy_api_call_retrofit/screens/widgets/product_item_notifier.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'core/db/app_db.dart';
-import 'locator/locator.dart';
-
-
+import 'core/locator/locator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await setupLocator();
   await locator.isReady<AppDB>();
-  runApp(const MyApp());
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then(
+        (value) => runApp(const MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -26,13 +30,15 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MultiProvider(
           providers: [
-            ChangeNotifierProvider(create: (context) {
-              return ProductItemNotifier();
-            },)
+            ChangeNotifierProvider(
+              create: (context) {
+                return ProductItemNotifier();
+              },
+            )
           ],
-          child:MaterialApp(
+          child: MaterialApp(
             builder: (BuildContext context, child) {
-              child= GestureDetector(
+              child = GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
                 child: child,
@@ -44,25 +50,9 @@ class MyApp extends StatelessWidget {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-            home:  const AddOrderPage(),
-          ) ,
+            home: const AddOrderPage(),
+          ),
         );
-        // return MaterialApp(
-        //   builder: (BuildContext context, child) {
-        //     child= GestureDetector(
-        //       behavior: HitTestBehavior.opaque,
-        //       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        //       child: child,
-        //     );
-        //     return child;
-        //   },
-        //   title: 'Flutter Demo',
-        //   theme: ThemeData(
-        //     colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        //     useMaterial3: true,
-        //   ),
-        //   home:  const AddOrderPage(),
-        // );
       },
     );
   }

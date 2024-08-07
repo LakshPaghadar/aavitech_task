@@ -1,7 +1,6 @@
 
 import 'dart:typed_data';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -21,7 +20,7 @@ class SignatureWidget extends StatelessWidget {
           border: Border.all(color: Colors.black),
         ),
         child: signature == null
-            ? SizedBox()
+            ? const SizedBox()
             : Image.memory(signature!),
       ),
     );

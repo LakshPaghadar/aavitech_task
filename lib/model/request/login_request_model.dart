@@ -1,4 +1,4 @@
-import 'dart:ffi';
+
 
 import 'package:dummy_api_call_retrofit/model/request/user_request_model.dart';
 import 'package:json_annotation/json_annotation.dart';

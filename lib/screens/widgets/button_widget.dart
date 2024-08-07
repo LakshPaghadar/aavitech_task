@@ -36,7 +36,6 @@ class AppButton extends StatelessWidget {
         onPressed: callback,
         color: AppColor.favColor,
         shape: UnderlineInputBorder(
-          //side: BorderSide(color: AppColor.primaryColor, width: 2.w),
           borderRadius: BorderRadius.all(Radius.circular(radius ?? 10)),
         ),
         child: child ??

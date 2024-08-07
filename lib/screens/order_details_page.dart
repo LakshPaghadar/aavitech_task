@@ -56,14 +56,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Coast Holywood',
+          'All Order Details',
           style: textBold,
         ),
         8.verticalSpace,
-        Text(
-          'Discount: 4.0%',
-          style: textMedium.copyWith(color: AppColor.favColor),
-        ),
       ],
     );
   }
