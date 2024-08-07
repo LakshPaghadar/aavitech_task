@@ -115,4 +115,48 @@ class GetProductsResult {
   factory GetProductsResult.fromJson(Map<String, dynamic> json) => _$GetProductsResultFromJson(json);
 
   Map<String, dynamic> toJson() => _$GetProductsResultToJson(this);
+
+  @override
+  String toString() {
+    return 'GetProductsResult(barCode: $barCode, createdDate: $createdDate, deleted: $deleted, id: $id, isSpecialOfferSelected: $isSpecialOfferSelected, isWeight: $isWeight, modifiedDate: $modifiedDate, name: $name, nominalCode: $nominalCode, packSize: $packSize, price: $price, productCategory: $productCategory, productCode: $productCode, productVatId: $productVatId)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is GetProductsResult &&
+        other.barCode == barCode &&
+        other.createdDate == createdDate &&
+        other.deleted == deleted &&
+        other.id == id &&
+        other.isSpecialOfferSelected == isSpecialOfferSelected &&
+        other.isWeight == isWeight &&
+        other.modifiedDate == modifiedDate &&
+        other.name == name &&
+        other.nominalCode == nominalCode &&
+        other.packSize == packSize &&
+        other.price == price &&
+        other.productCategory == productCategory &&
+        other.productCode == productCode &&
+        other.productVatId == productVatId;
+  }
+
+  @override
+  int get hashCode {
+    return barCode.hashCode ^
+    createdDate.hashCode ^
+    deleted.hashCode ^
+    id.hashCode ^
+    isSpecialOfferSelected.hashCode ^
+    isWeight.hashCode ^
+    modifiedDate.hashCode ^
+    name.hashCode ^
+    nominalCode.hashCode ^
+    packSize.hashCode ^
+    price.hashCode ^
+    productCategory.hashCode ^
+    productCode.hashCode ^
+    productVatId.hashCode;
+  }
 }

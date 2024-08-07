@@ -55,6 +55,8 @@ dependencies:
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
 
+  provider: ^6.0.3
+
   #path: ^1.8.0
   #local database
   floor: ^1.2.0

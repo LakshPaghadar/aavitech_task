@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:dummy_api_call_retrofit/locator/locator.dart';
-import 'package:dummy_api_call_retrofit/notwork/data_source/api_utils.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+
+import 'data_source/api_utils.dart';
 
 class ApiClient {
   static Future<void> provideDio() async {

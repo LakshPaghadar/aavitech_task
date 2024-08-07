@@ -1,12 +1,19 @@
+import 'dart:typed_data';
+
 import 'package:dummy_api_call_retrofit/screens/widgets/base_app_bar.dart';
+import 'package:dummy_api_call_retrofit/screens/widgets/product_item_notifier.dart';
+import 'package:dummy_api_call_retrofit/screens/widgets/signature_widget.dart';
 import 'package:dummy_api_call_retrofit/values/style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
+import '../model/response/customer_with_product.dart';
 import '../values/colors.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
-  const OrderDetailsScreen({Key? key}) : super(key: key);
+  Uint8List? signature;
+   OrderDetailsScreen({super.key,required this.signature});
 
   @override
   State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
@@ -26,16 +33,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStoreInfo(),
-              16.verticalSpace,
-              _buildOrderDetailsTable(),
-              32.verticalSpace,
-              _buildSignature(),
-            ],
-          ),
+          child: Consumer<ProductItemNotifier>(
+              builder: (context, provider, child) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildStoreInfo(),
+                16.verticalSpace,
+                _buildOrderDetailsTable(provider),
+                32.verticalSpace,
+                _buildSignature(),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -45,7 +55,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Text(
+        Text(
           'Coast Holywood',
           style: textBold,
         ),
@@ -58,7 +68,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  Widget _buildOrderDetailsTable() {
+  Widget _buildOrderDetailsTable(ProductItemNotifier provider) {
     return Table(
       border: TableBorder.all(
         color: Colors.grey,
@@ -67,10 +77,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       columnWidths: const {
         0: FlexColumnWidth(1.5),
-        1: FlexColumnWidth(0.5),
-        2: FlexColumnWidth(0.7),
-        3: FlexColumnWidth(0.7),
-        4: FlexColumnWidth(0.7),
+        1: FlexColumnWidth(1.5),
+        2: FlexColumnWidth(1.5),
+        3: FlexColumnWidth(1.5),
+        4: FlexColumnWidth(1.5),
       },
       children: [
         _buildTableRow(
@@ -83,67 +93,112 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ],
           isHeader: true,
         ),
-        _buildTableRow([
-          'Broxburn Large Eggs:\n15 Dozen Pp Case',
-          '1',
-          '18.00',
-          '18.00',
-          '17.28',
-        ]),
-        _buildTableRow([
-          'Broxburn Large Eggs:\n15 Dozen Pp Case',
-          '1',
-          '18.00',
-          '18.00',
-          '17.28',
-        ]),
-        _buildTableRow([
-          'Broxburn Large Eggs:\n15 Dozen Pp Case',
-          '1',
-          '18.00',
-          '18.00',
-          '17.28',
-        ]),
-        _buildTableRow([
-          'Broxburn Large Eggs:\n15 Dozen Pp Case',
-          '1',
-          '18.00',
-          '18.00',
-          '17.28',
-        ]),
-        _buildTableRow([
-          'Broxburn Large Eggs:\n15 Dozen Pp Case',
-          '1',
-          '18.00',
-          '18.00',
-          '17.28',
-        ]),
-
-        _buildTableRow([
-          'Very Large Eggs: 20\nEggs Tray Loose',
-          '2',
-          '3.20',
-          '6.40',
-          '6.14',
-        ]),
-        _buildTableRow(
-          [
-            'Total',
-            '3',
-            '21.20',
-            '24.40',
-            '23.42',
-          ],
-          isFooter: true,
+        ...provider.items.map(
+          (e) {
+            return _buildTableRow(
+              [
+                e.product.name.toString(),
+                e.qnt.toString(),
+                e.product.price.toString(),
+                _getTotalPrice(e.qnt, e.product.price),
+                _getEffectivePrice(
+                    e.qnt, e.product.price, e.customerData.discountPercentage),
+              ],
+            );
+          },
         ),
+        ...[
+          _buildTableRow(
+            [
+              'Total',
+              _getTotalQuantity(provider.items),
+              _getTotalUnitPrice(provider.items),
+              _getTotalPriceList(provider.items),
+              _getTotalOfEffectivePrice(provider.items),
+            ],
+            isFooter: true,
+          ),
+        ],
       ],
     );
   }
 
-  TableRow _buildTableRow(List<String> cells, {bool isHeader = false, bool isFooter = false}) {
+  String _getTotalOfEffectivePrice(List<CustomerWithProduct> items) {
+    double total = 0.0;
+    items.forEach(
+      (element) {
+        total = total +
+            double.parse(_getEffectivePrice(element.qnt, element.product.price,
+                element.customerData.discountPercentage));
+      },
+    );
+    return total.toStringAsFixed(2);
+  }
+
+  String _getEffectivePrice(int q, double? price, double? discount) {
+    String total = _getTotalPrice(q, price);
+    if (discount == null) {
+      return total;
+    } else {
+      double price = double.parse(total);
+      double discountAmount = price * (discount / 100);
+      double finalPrice = price - discountAmount;
+      return finalPrice.toStringAsFixed(2);
+    }
+  }
+
+  String _getTotalPriceList(List<CustomerWithProduct> items) {
+    double total = 0.0;
+    items.forEach(
+      (element) {
+        if (element.product.price != null) {
+          total = total +
+              double.parse(_getTotalPrice(element.qnt, element.product.price!));
+        }
+      },
+    );
+    return total.toStringAsFixed(2);
+  }
+
+  String _getTotalQuantity(List<CustomerWithProduct> items) {
+    int total = 0;
+    items.forEach(
+      (element) {
+        total = total + element.qnt;
+      },
+    );
+    return total.toString();
+  }
+
+  String _getTotalUnitPrice(List<CustomerWithProduct> items) {
+    double total = 0;
+    items.forEach(
+      (element) {
+        if (element.product.price != null) {
+          total = total + element.product.price!;
+        }
+      },
+    );
+    return total.toStringAsFixed(2);
+  }
+
+  String _getTotalPrice(int q, double? price) {
+    if (price != null) {
+      return (q * price).toStringAsFixed(2);
+    } else {
+      return "0";
+    }
+  }
+
+  TableRow _buildTableRow(List<String> cells,
+      {bool isHeader = false, bool isFooter = false}) {
     return TableRow(
       decoration: BoxDecoration(
-        color: isHeader ? AppColor.color575757 : isFooter ? AppColor.colorc7c7c7 :Colors.transparent,
+        color: isHeader
+            ? AppColor.color575757
+            : isFooter
+                ? AppColor.colorc7c7c7
+                : Colors.transparent,
       ),
       children: cells.map((cell) {
         return Padding(
@@ -151,12 +206,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           child: Center(
             child: Text(
               cell,
-              style:textMedium.copyWith(
-                fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
-                color: isHeader ? AppColor.white : Colors.black,
-                overflow: TextOverflow.visible
-              ),
+              style: textMedium.copyWith(
+                  fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                  color: isHeader ? AppColor.white : Colors.black,
+                  overflow: TextOverflow.visible),
             ),
           ),
         );
@@ -169,15 +223,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text('Signature'),
-        SizedBox(
-          width: 150.w,
-          height: 50.h,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black),
-            ),
-          ),
-        ),
+        SignatureWidget(signature: widget.signature),
       ],
     );
   }

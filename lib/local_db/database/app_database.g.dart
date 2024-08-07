@@ -76,6 +76,8 @@ class _$AppDatabase extends AppDatabase {
 
   GetProductsResultDao? _getProductsResultDaoInstance;
 
+  CategoryDoa? _categoryDoaInstance;
+
   Future<sqflite.Database> open(
     String path,
     List<Migration> migrations, [
@@ -101,6 +103,8 @@ class _$AppDatabase extends AppDatabase {
             'CREATE TABLE IF NOT EXISTS `Customer` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountRef` TEXT, `address1` TEXT, `address2` TEXT, `address3` TEXT, `address4` TEXT, `address5` TEXT, `cAddress1` TEXT, `cAddress2` TEXT, `cAddress3` TEXT, `cAddress4` TEXT, `cAddress5` TEXT, `contactName` TEXT, `countryCode` TEXT, `createdDate` TEXT, `dateAccountOpened` TEXT, `discountPercentage` REAL, `email` TEXT, `fax` TEXT, `isCostcutter` INTEGER, `isDeleted` INTEGER, `isHenderson` INTEGER, `isMessageEnabled` INTEGER, `isMusgrave` INTEGER, `isPredictionEnable` INTEGER, `isTemplateEnable` INTEGER, `message` TEXT, `modifiedDate` TEXT, `name` TEXT, `telephone` TEXT, `telephone2` TEXT, `webAddress` TEXT)');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `GetProductsResult` (`barCode` TEXT, `createdDate` TEXT, `deleted` INTEGER, `id` INTEGER PRIMARY KEY AUTOINCREMENT, `isSpecialOfferSelected` INTEGER, `isWeight` INTEGER, `modifiedDate` TEXT, `name` TEXT, `nominalCode` TEXT, `packSize` INTEGER, `price` REAL, `productCategory` TEXT, `productCode` TEXT, `productVatId` INTEGER)');
+        await database.execute(
+            'CREATE TABLE IF NOT EXISTS `CategoryWithId` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -117,6 +121,11 @@ class _$AppDatabase extends AppDatabase {
   GetProductsResultDao get getProductsResultDao {
     return _getProductsResultDaoInstance ??=
         _$GetProductsResultDao(database, changeListener);
+  }
+
+  @override
+  CategoryDoa get categoryDoa {
+    return _categoryDoaInstance ??= _$CategoryDoa(database, changeListener);
   }
 }
 
@@ -486,5 +495,65 @@ class _$GetProductsResultDao extends GetProductsResultDao {
   @override
   Future<void> deleteProduct(GetProductsResult product) async {
     await _getProductsResultDeletionAdapter.delete(product);
+  }
+}
+
+class _$CategoryDoa extends CategoryDoa {
+  _$CategoryDoa(
+    this.database,
+    this.changeListener,
+  )   : _queryAdapter = QueryAdapter(database),
+        _categoryWithIdInsertionAdapter = InsertionAdapter(
+            database,
+            'CategoryWithId',
+            (CategoryWithId item) =>
+                <String, Object?>{'id': item.id, 'name': item.name}),
+        _categoryWithIdUpdateAdapter = UpdateAdapter(
+            database,
+            'CategoryWithId',
+            ['id'],
+            (CategoryWithId item) =>
+                <String, Object?>{'id': item.id, 'name': item.name}),
+        _categoryWithIdDeletionAdapter = DeletionAdapter(
+            database,
+            'CategoryWithId',
+            ['id'],
+            (CategoryWithId item) =>
+                <String, Object?>{'id': item.id, 'name': item.name});
+
+  final sqflite.DatabaseExecutor database;
+
+  final StreamController<String> changeListener;
+
+  final QueryAdapter _queryAdapter;
+
+  final InsertionAdapter<CategoryWithId> _categoryWithIdInsertionAdapter;
+
+  final UpdateAdapter<CategoryWithId> _categoryWithIdUpdateAdapter;
+
+  final DeletionAdapter<CategoryWithId> _categoryWithIdDeletionAdapter;
+
+  @override
+  Future<List<CategoryWithId>> findAllCategory() async {
+    return _queryAdapter.queryList('SELECT * FROM CategoryWithId',
+        mapper: (Map<String, Object?> row) =>
+            CategoryWithId(row['id'] as int?, row['name'] as String?));
+  }
+
+  @override
+  Future<void> insertCategory(CategoryWithId product) async {
+    await _categoryWithIdInsertionAdapter.insert(
+        product, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> updateCategory(CategoryWithId product) async {
+    await _categoryWithIdUpdateAdapter.update(
+        product, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> deleteCategory(CategoryWithId product) async {
+    await _categoryWithIdDeletionAdapter.delete(product);
   }
 }

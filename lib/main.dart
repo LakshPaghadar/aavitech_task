@@ -1,6 +1,8 @@
 import 'package:dummy_api_call_retrofit/screens/add_order_page.dart';
+import 'package:dummy_api_call_retrofit/screens/widgets/product_item_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import 'core/db/app_db.dart';
 import 'locator/locator.dart';
 
@@ -10,7 +12,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await setupLocator();
   await locator.isReady<AppDB>();
-
   runApp(const MyApp());
 }
 
@@ -23,14 +24,45 @@ class MyApp extends StatelessWidget {
     return ScreenUtilInit(
       designSize: const Size(390, 810),
       builder: (context, child) {
-        return MaterialApp(
-          title: 'Flutter Demo',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            useMaterial3: true,
-          ),
-          home:  const AddOrderPage(),
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (context) {
+              return ProductItemNotifier();
+            },)
+          ],
+          child:MaterialApp(
+            builder: (BuildContext context, child) {
+              child= GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                child: child,
+              );
+              return child;
+            },
+            title: 'Flutter Demo',
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+            home:  const AddOrderPage(),
+          ) ,
         );
+        // return MaterialApp(
+        //   builder: (BuildContext context, child) {
+        //     child= GestureDetector(
+        //       behavior: HitTestBehavior.opaque,
+        //       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        //       child: child,
+        //     );
+        //     return child;
+        //   },
+        //   title: 'Flutter Demo',
+        //   theme: ThemeData(
+        //     colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        //     useMaterial3: true,
+        //   ),
+        //   home:  const AddOrderPage(),
+        // );
       },
     );
   }

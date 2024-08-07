@@ -139,4 +139,84 @@ class Customer {
 
   factory Customer.fromJson(Map<String, dynamic> json) => _$CustomerFromJson(json);
   Map<String, dynamic> toJson() => _$CustomerToJson(this);
+
+  @override
+  String toString() {
+    return 'Customer(id: $id, accountRef: $accountRef, address1: $address1, address2: $address2, address3: $address3, address4: $address4, address5: $address5, cAddress1: $cAddress1, cAddress2: $cAddress2, cAddress3: $cAddress3, cAddress4: $cAddress4, cAddress5: $cAddress5, contactName: $contactName, countryCode: $countryCode, createdDate: $createdDate, dateAccountOpened: $dateAccountOpened, discountPercentage: $discountPercentage, email: $email, fax: $fax, isCostcutter: $isCostcutter, isDeleted: $isDeleted, isHenderson: $isHenderson, isMessageEnabled: $isMessageEnabled, isMusgrave: $isMusgrave, isPredictionEnable: $isPredictionEnable, isTemplateEnable: $isTemplateEnable, message: $message, modifiedDate: $modifiedDate, name: $name, telephone: $telephone, telephone2: $telephone2, webAddress: $webAddress)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Customer &&
+        other.id == id &&
+        other.accountRef == accountRef &&
+        other.address1 == address1 &&
+        other.address2 == address2 &&
+        other.address3 == address3 &&
+        other.address4 == address4 &&
+        other.address5 == address5 &&
+        other.cAddress1 == cAddress1 &&
+        other.cAddress2 == cAddress2 &&
+        other.cAddress3 == cAddress3 &&
+        other.cAddress4 == cAddress4 &&
+        other.cAddress5 == cAddress5 &&
+        other.contactName == contactName &&
+        other.countryCode == countryCode &&
+        other.createdDate == createdDate &&
+        other.dateAccountOpened == dateAccountOpened &&
+        other.discountPercentage == discountPercentage &&
+        other.email == email &&
+        other.fax == fax &&
+        other.isCostcutter == isCostcutter &&
+        other.isDeleted == isDeleted &&
+        other.isHenderson == isHenderson &&
+        other.isMessageEnabled == isMessageEnabled &&
+        other.isMusgrave == isMusgrave &&
+        other.isPredictionEnable == isPredictionEnable &&
+        other.isTemplateEnable == isTemplateEnable &&
+        other.message == message &&
+        other.modifiedDate == modifiedDate &&
+        other.name == name &&
+        other.telephone == telephone &&
+        other.telephone2 == telephone2 &&
+        other.webAddress == webAddress;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+    accountRef.hashCode ^
+    address1.hashCode ^
+    address2.hashCode ^
+    address3.hashCode ^
+    address4.hashCode ^
+    address5.hashCode ^
+    cAddress1.hashCode ^
+    cAddress2.hashCode ^
+    cAddress3.hashCode ^
+    cAddress4.hashCode ^
+    cAddress5.hashCode ^
+    contactName.hashCode ^
+    countryCode.hashCode ^
+    createdDate.hashCode ^
+    dateAccountOpened.hashCode ^
+    discountPercentage.hashCode ^
+    email.hashCode ^
+    fax.hashCode ^
+    isCostcutter.hashCode ^
+    isDeleted.hashCode ^
+    isHenderson.hashCode ^
+    isMessageEnabled.hashCode ^
+    isMusgrave.hashCode ^
+    isPredictionEnable.hashCode ^
+    isTemplateEnable.hashCode ^
+    message.hashCode ^
+    modifiedDate.hashCode ^
+    name.hashCode ^
+    telephone.hashCode ^
+    telephone2.hashCode ^
+    webAddress.hashCode;
+  }
 }

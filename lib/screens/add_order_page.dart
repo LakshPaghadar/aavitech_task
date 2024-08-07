@@ -1,29 +1,30 @@
 import 'package:dummy_api_call_retrofit/core/db/app_db.dart';
+import 'package:dummy_api_call_retrofit/local_db/dao/category_dao.dart';
 import 'package:dummy_api_call_retrofit/local_db/dao/customer_dao.dart';
 import 'package:dummy_api_call_retrofit/local_db/dao/product_dao.dart';
 import 'package:dummy_api_call_retrofit/model/request/login_request_model.dart';
 import 'package:dummy_api_call_retrofit/model/request/user_request_model.dart';
-import 'package:dummy_api_call_retrofit/model/response/OrderItem.dart';
 import 'package:dummy_api_call_retrofit/model/response/customer_response_model.dart';
-import 'package:dummy_api_call_retrofit/notwork/store/post_store.dart';
 import 'package:dummy_api_call_retrofit/screens/widgets/base_app_bar.dart';
 import 'package:dummy_api_call_retrofit/screens/widgets/button_widget.dart';
+import 'package:dummy_api_call_retrofit/screens/widgets/product_item_notifier.dart';
+import 'package:dummy_api_call_retrofit/screens/widgets/signature_widget.dart';
+import 'package:dummy_api_call_retrofit/screens/widgets/size_box_center_widget.dart';
+import 'package:dummy_api_call_retrofit/utils/constants.dart';
 import 'package:dummy_api_call_retrofit/values/colors.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobx/mobx.dart';
+import 'package:provider/provider.dart';
 
 import '../model/response/customer_with_product.dart';
 import '../model/response/products_response.dart';
+import '../network/store/post_store.dart';
 import '../values/style.dart';
 import 'add_signature_page.dart';
-import 'image_card.dart';
+
 import 'order_details_page.dart';
 
 class AddOrderPage extends StatefulWidget {
@@ -39,32 +40,45 @@ class _AddOrderPageState extends State<AddOrderPage> {
   List<ReactionDisposer>? disposer;
   final ValueNotifier<int> _counter = ValueNotifier(0);
   TextEditingController qtyController = TextEditingController();
-  ValueNotifier<Uint8List?> signature = ValueNotifier(null);
+  final ValueNotifier<Uint8List?> _signature = ValueNotifier(null);
 
   final ValueNotifier<String?> _selectedCustomer = ValueNotifier(null);
   final ValueNotifier<String?> _selectedCategory = ValueNotifier(null);
   final ValueNotifier<String?> _selectedProduct = ValueNotifier(null);
 
-  List<CustomerWithProduct> _orderList = [];
-  List<Customer> _allCustomerList = [];
-  List<Customer> _allCategoryList = [];
-  List<Customer> _allProductList = [];
   final ValueNotifier<Customer?> _selectedCustomerData = ValueNotifier(null);
   final ValueNotifier<GetProductsResult?> _selectedProductData =
       ValueNotifier(null);
+  final List<String> _customers = [];
+  final List<String> _categories = [];
+  final List<String> _products = [];
 
-  final List<String> _customers = ['-- No Customer found --'];
-  final List<String> _categories = ["-- No Categories found --"];
-  final List<String> _products = ["-- No Product found --"];
+  @override
+  void dispose() {
+    isLoading.dispose();
+    _counter.dispose();
+    qtyController.dispose();
+    _signature.dispose();
+    _selectedCustomer.dispose();
+    _selectedCategory.dispose();
+    _selectedProduct.dispose();
+    _selectedCustomerData.dispose();
+    _selectedProductData.dispose();
+    removeReactions();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     registerReactions();
-    qtyController.text = _counter.value.toString();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       _doApiCallAndDownloadData();
     });
+    qtyController.addListener(_onQntChange);
+  }
+  void _onQntChange(){
+    _counter.value = int.parse(qtyController.text);
   }
 
   void registerReactions() {
@@ -92,11 +106,6 @@ class _AddOrderPageState extends State<AddOrderPage> {
     }
   }
 
-  @override
-  void dispose() {
-    removeReactions();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,17 +117,11 @@ class _AddOrderPageState extends State<AddOrderPage> {
         titleWidgetColor: AppColor.white,
         leadingIcon: false,
         action: [
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const OrderDetailsScreen()));
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12).r,
-              child: const Icon(
-                Icons.more_vert,
-                color: AppColor.white,
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12).r,
+            child: const Icon(
+              Icons.more_vert,
+              color: AppColor.white,
             ),
           )
         ],
@@ -157,11 +160,10 @@ class _AddOrderPageState extends State<AddOrderPage> {
   }
 
   Widget _buildTotalUnitView() {
-    return ValueListenableBuilder(
-      valueListenable: _counter,
-      builder: (context, value, child) {
+    return Consumer<ProductItemNotifier>(
+      builder: (BuildContext context, ProductItemNotifier value, Widget? child) {
         return Text(
-          'Total Units : $value',
+          'Total Units : ${Provider.of<ProductItemNotifier>(context, listen: false).items.length}',
           style: textBold,
         );
       },
@@ -194,41 +196,20 @@ class _AddOrderPageState extends State<AddOrderPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) {
-                return const SignaturePage();
-              },
-            )).then(
-              (value) {
-                signature.value = value;
-              },
-            );
-          },
+          onTap: _tapToSignatureClick,
           child: const Text('Tap to Signature'),
         ),
         10.horizontalSpace,
         ValueListenableBuilder(
-            valueListenable: signature,
+            valueListenable: _signature,
             builder: (context, value, child) {
-              return SizedBox(
-                width: 120.w,
-                height: 100.h,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black),
-                  ),
-                  child: signature.value == null
-                      ? SizedBox()
-                      : Image.memory(signature.value!),
-                ),
-              );
+              return SignatureWidget(signature: _signature.value);
             }),
         10.horizontalSpace,
         Expanded(
           child: AppButton(
             "done",
-            () {},
+            _onDoneClick,
             child: const Icon(
               Icons.check,
               color: Colors.white,
@@ -238,43 +219,76 @@ class _AddOrderPageState extends State<AddOrderPage> {
       ],
     );
   }
+  void _onDoneClick(){
+    Constants.clearFocus();
+    if (Provider.of<ProductItemNotifier>(context, listen: false).items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please add atleast one product")));
+    } else if (_signature.value==null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please add your signature")));
+    } else {
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => OrderDetailsScreen(signature: _signature.value,)));
+    }
+  }
+  void _tapToSignatureClick(){
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) {
+        return const SignaturePage();
+      },
+    )).then(
+          (value) {
+        _signature.value = value;
+      },
+    );
+  }
 
   Widget _buildItemListView() {
-    return _orderList.isEmpty
-        ? SizedBox(
-            height: 100.h,
-            width: 1.sw,
-            child: const Center(child: Text('No items added yet')))
-        : ListView.builder(
-            itemCount: _orderList.length,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) {
-              return Column(
-                children: [
-                  ListTile(
-                    title: Text(
-                      _orderList[index].product.name.toString(),
-                      style: textMedium,
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _orderList[index].qnt.toString(),
+    return Consumer<ProductItemNotifier>(
+      builder:(context, provider, child) {
+        return provider.items.isEmpty
+            ? SizedBox(
+                height: 100.h,
+                width: 1.sw,
+                child: const Center(child: Text('No items added yet')))
+            : ListView.builder(
+                itemCount: provider.items.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final item = provider.items[index];
+                  return Column(
+                    children: [
+                      ListTile(
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Product : ${item.product.name}",
+                              style: textMedium,
+                            ),
+                            Text(
+                              "Customer : ${item.customerData.name}",
+                              style: textLight,
+                            ),
+                          ],
+                        ),
+                        trailing: Text(
+                          item.qnt.toString(),
                           style: textMedium,
                         ),
-                      ],
-                    ),
-                  ),
-                  Divider(
-                    height: 1.h,
-                    color: AppColor.color575757,
-                  )
-                ],
+                      ),
+                      Divider(
+                        height: 1.h,
+                        color: AppColor.color575757,
+                      )
+                    ],
+                  );
+                },
               );
-            },
-          );
+      }
+    );
   }
 
   Widget _buildItemCountView() {
@@ -286,7 +300,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             SizedBox(
-              width: 100,
+              width: 100.w,
               child: ValueListenableBuilder(
                 valueListenable: _counter,
                 builder: (context, value, child) {
@@ -295,7 +309,6 @@ class _AddOrderPageState extends State<AddOrderPage> {
                     inputFormatters: <TextInputFormatter>[
                       FilteringTextInputFormatter.digitsOnly
                     ],
-                    readOnly: true,
                     cursorColor: AppColor.favColor,
                     decoration: const InputDecoration(
                         contentPadding: EdgeInsets.zero,
@@ -319,66 +332,56 @@ class _AddOrderPageState extends State<AddOrderPage> {
             ),
             10.horizontalSpace,
             Expanded(
-              child: AppButton(
-                "ADD",
-                () {
-                  _counter.value++;
-                  qtyController.text = _counter.value.toString();
-                },
-              ),
+              child: AppButton("ADD", _onAddClick,),
             ),
             10.horizontalSpace,
             Expanded(
-              child: AppButton(
-                "SUB",
-                () {
-                  if (_counter.value > 0) {
-                    _counter.value--;
-                    qtyController.text = _counter.value.toString();
-                  }
-                },
-              ),
+              child: AppButton("SUB", _onSubClick,),
             ),
             10.horizontalSpace,
             Expanded(
-              child: AppButton("REM", () {
-                _counter.value = 0;
-                qtyController.text = _counter.value.toString();
-              }),
+              child: AppButton("REM", _onRemoveClick),
             ),
           ],
         ),
         10.verticalSpace,
-        AppButton(
-          "Submit",
-          () {
-            if (_validate()) {
-              CustomerWithProduct cwp = CustomerWithProduct(
-                  DateTime.now().millisecondsSinceEpoch,
-                  _selectedCustomerData.value!,
-                  _selectedCategory.value!,
-                  _selectedProductData.value!,
-                  int.parse(qtyController.text));
-              _orderList.add(cwp);
-              _selectedCustomerData.value = null;
-              _selectedCustomer.value = null;
-              _selectedCategory.value = null;
-              _selectedProductData.value = null;
-              _selectedProduct.value = null;
-              _counter.value = 0;
-              qtyController.text = "0";
-              setState(() {});
-            }
-          },
-          width: 1.sw,
-        )
       ],
     );
+  }
+  void _onAddClick(){
+    Constants.clearFocus();
+    if (_validate()) {
+      CustomerWithProduct cwp = CustomerWithProduct(
+          DateTime.now().millisecondsSinceEpoch,
+          _selectedCustomerData.value!,
+          _selectedCategory.value!,
+          _selectedProductData.value!,
+          int.parse(qtyController.text));
+
+      Provider.of<ProductItemNotifier>(context, listen: false).addOrUpdateItem(cwp);
+    }
+  }
+  void _onSubClick(){
+    Constants.clearFocus();
+    if (_counter.value > 0) {
+      _counter.value--;
+      qtyController.text = _counter.value.toString();
+    }
+  }
+  void _onRemoveClick(){
+    Constants.clearFocus();
+    _selectedCustomerData.value = null;
+    _selectedCustomer.value = null;
+    _selectedCategory.value = null;
+    _selectedProductData.value = null;
+    _selectedProduct.value = null;
+    _counter.value = 0;
+    qtyController.text = "";
   }
 
   bool _validate() {
     if (_formKey.currentState!.validate()) {
-      if (int.parse(qtyController.text) == 0) {
+      if (qtyController.text.isEmpty ||int.parse(qtyController.text) == 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Please add one or more than one item"),
@@ -407,60 +410,81 @@ class _AddOrderPageState extends State<AddOrderPage> {
   }
 
   Widget _productListMenu() {
-    //isloading ==true return prograss
-    //else returu future
-    return FutureBuilder(
-      future: productsDao.findAllProducts(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          _products.clear();
-          return SizeBoxCenter(const CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          _products.clear();
-          return SizeBoxCenter(Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          _products.clear();
-          return SizeBoxCenter(const Text('No customers found.'));
-        } else {
-          _products.clear();
-          postStore.productListFilter.forEach(
-                (element) {
-              _products.add("${element.name}  ||  ${element.productCategory}");
+    return ValueListenableBuilder(
+        valueListenable: _selectedCategory,
+        builder: (context, value, child) {
+          debugPrint("SNAPSHOT --- findAllProducts");
+          return FutureBuilder(
+            future: productsDao.findAllProducts(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                _products.clear();
+                return SizedBoxCenter(child1: const CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                _products.clear();
+                return SizedBoxCenter(
+                  child1: Text('Error: ${snapshot.error}'),
+                );
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                _products.clear();
+                return SizedBoxCenter(child1: const Text('No products found.'));
+              } else {
+                _products.clear();
+                snapshot.data?.forEach(
+                  (element) {
+                    String cate = _selectedCategory.value.toString();
+                    if (element.productCategory!
+                            .toLowerCase()
+                            .contains(cate.toLowerCase()) ==
+                        true) {
+                      _products.add(
+                          "${element.name}  ||  ${element.productCategory}");
+                    }
+                  },
+                );
+                return _buildDropdown(
+                    'Select Product', _products, _selectedProduct, (newValue) {
+                  _selectedProduct.value = newValue;
+                  _selectedProductData.value = snapshot.data?.firstWhere(
+                    (element) =>
+                        newValue ==
+                        "${element.name}  ||  ${element.productCategory}",
+                  );
+                });
+              }
             },
           );
-          return _buildDropdown('Select Product', _products, _selectedProduct,
-                  (newValue) {
-                _selectedProduct.value = newValue;
-                _selectedProductData.value =
-                    postStore.productListFilter.firstWhere(
-                          (element) =>
-                      newValue ==
-                          "${element.name}  ||  ${element.productCategory}",
-                    );
-              });
-        }
-      },
-    );
-  }
-  Widget SizeBoxCenter(Widget child1){
-    return SizedBox(height: 100.h, width:1.sw,child: Center(child: child1));
+        });
   }
 
   Widget _categoryListMenu() {
-    return Observer(
-      builder: (context) {
-        if (postStore.categoryList.isNotEmpty) {
+    debugPrint("SNAPSHOT --- findAllCategory");
+    return FutureBuilder(
+      future: categoryDao.findAllCategory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           _categories.clear();
-          _categories.addAll(postStore.categoryList);
-        } else {}
-        return _buildDropdown('Select Category', _categories, _selectedCategory,
-            (newValue) {
-          _selectedProduct.value = null;
-          _selectedProductData.value = null;
-          _selectedCategory.value = newValue;
-
-          postStore.applyProductListFilter(newValue);
-        });
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          _categories.clear();
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          _categories.clear();
+          return const Center(child: Text('No category found.'));
+        } else {
+          _categories.clear();
+          snapshot.data?.forEach(
+            (element) {
+              _categories.add(element.name!);
+            },
+          );
+          return _buildDropdown(
+              'Select Category', _categories, _selectedCategory, (newValue) {
+            _selectedProduct.value = null;
+            _selectedProductData.value = null;
+            _selectedCategory.value = newValue;
+          });
+        }
       },
     );
   }
@@ -483,14 +507,13 @@ class _AddOrderPageState extends State<AddOrderPage> {
           _customers.clear();
           snapshot.data?.forEach(
             (element) {
-              _allCustomerList.add(element);
               _customers.add(element.name!);
             },
           );
           return _buildDropdown(
               'Select Customer', _customers, _selectedCustomer, (newValue) {
             _selectedCustomer.value = newValue;
-            _selectedCustomerData.value = _allCustomerList.firstWhere(
+            _selectedCustomerData.value = snapshot.data?.firstWhere(
               (element) => element.name == newValue,
             );
           });
@@ -549,34 +572,6 @@ class _AddOrderPageState extends State<AddOrderPage> {
           },
         ),
       ],
-    );
-  }
-
-  Widget observeResponse() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Observer(
-        builder: (context) {
-          if (isLoading.value) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (postStore.customerList.isEmpty) {
-            return const Text("No Data found");
-          } else {
-            return ListView.builder(
-              itemCount: postStore.customerList.length + 1,
-              shrinkWrap: true,
-              itemBuilder: (context, index) {
-                if (index < postStore.customerList.length) {
-                  return ImageCard(
-                    imageUrl: postStore.customerList[index].name!,
-                    description: postStore.customerList[index].accountRef!,
-                  );
-                }
-              },
-            );
-          }
-        },
-      ),
     );
   }
 

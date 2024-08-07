@@ -1,11 +1,12 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:dummy_api_call_retrofit/local_db/dao/category_dao.dart';
 import 'package:dummy_api_call_retrofit/local_db/dao/product_dao.dart';
 import 'package:dummy_api_call_retrofit/locator/locator.dart';
+import 'package:dummy_api_call_retrofit/model/response/category_dao_id.dart';
 import 'package:dummy_api_call_retrofit/model/response/category_response.dart';
 import 'package:dummy_api_call_retrofit/model/response/products_response.dart';
-import 'package:dummy_api_call_retrofit/notwork/repository/post_repo_implement.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mobx/mobx.dart';
 
@@ -14,8 +15,7 @@ import '../../local_db/dao/customer_dao.dart';
 import '../../model/request/login_request_model.dart';
 import '../../model/response/customer_list_response.dart';
 import '../../model/response/customer_response_model.dart';
-import '../../model/response/photos_response.dart';
-import '../../model/response/post_response.dart';
+import '../repository/post_repo_implement.dart';
 
 part 'post_store.g.dart';
 
@@ -66,7 +66,7 @@ abstract class PostStoreBase with Store {
 
   void _saveDataInCategoryTable() async {
     for (var category in categoryList){
-      //await productsDao.insertProduct(category);
+      await categoryDao.insertCategory(CategoryWithId(null,category));
     }
     appHiveDb.firstTime=false;
   }
@@ -83,6 +83,7 @@ abstract class PostStoreBase with Store {
     try {
       var res = await postRepositoryImpl.getCategories(request);
       categoryList.addAll(res.getCategoriesResult);
+      _saveDataInCategoryTable();
       categoryResponse.value=res;
     } on DioException catch (e) {
       if ((e.type == DioExceptionType.unknown &&

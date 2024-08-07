@@ -1,13 +1,14 @@
 import 'package:dummy_api_call_retrofit/locator/locator.dart';
 import 'package:dummy_api_call_retrofit/model/request/login_request_model.dart';
-import 'package:dummy_api_call_retrofit/model/response/post_response.dart';
+
 import 'package:dummy_api_call_retrofit/model/response/products_response.dart';
-import 'package:dummy_api_call_retrofit/notwork/data_source/api_utils.dart';
-import 'package:dummy_api_call_retrofit/notwork/repository/post_repository.dart';
+import 'package:dummy_api_call_retrofit/network/repository/post_repository.dart';
+
 
 import '../../model/response/category_response.dart';
 import '../../model/response/customer_list_response.dart';
-import '../../model/response/photos_response.dart';
+import '../data_source/api_utils.dart';
+
 
 class PostRepositoryImpl extends PostRepository {
 
